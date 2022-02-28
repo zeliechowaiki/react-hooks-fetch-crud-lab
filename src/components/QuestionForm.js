@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function QuestionForm(props) {
+function QuestionForm({onAddQuestion}) {
   const [formData, setFormData] = useState({
     prompt: "",
     answer1: "",
@@ -17,15 +17,55 @@ function QuestionForm(props) {
     });
   }
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    console.log(formData);
+  function checkSubmit(e) {
+    e.preventDefault();
+
+    const validObj = Object.values(formData).every(entry => {
+      return entry !== '';
+    })
+
+    if (validObj) {handleSubmit()}
+    else {alert("Please fill out every field")};
+  }
+
+  function handleSubmit() {
+
+    let answers = [];
+
+    Object.keys(formData).forEach(key => {
+      if (key.includes('answer')) {
+        answers.push(formData[key]);
+      }
+    });
+
+    const dataToSend = {
+      prompt: formData.prompt,
+      answers: answers,
+      correctIndex: formData.correctIndex
+    }
+
+    fetch('http://localhost:4000/questions', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(dataToSend)
+    })
+    .then(response => response.json())
+    .then((newQuestion) => {onAddQuestion(newQuestion)})
+
+    setFormData({
+      prompt: "",
+      answer1: "",
+      answer2: "",
+      answer3: "",
+      answer4: "",
+      correctIndex: 0
+   })
   }
 
   return (
     <section>
       <h1>New Question</h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={checkSubmit}>
         <label>
           Prompt:
           <input
